@@ -23,7 +23,14 @@
     padding:20px;
     box-sizing:border-box;
   }
-  #confetti { position:absolute; top:0; left:0; width:500px; height:250px; pointer-events:none; }
+  #confetti { 
+    position:absolute; 
+    top:0; 
+    left:0; 
+    width:1000px; 
+    height:500px; 
+    pointer-events:none; 
+  }
 </style>
 </head>
 <body>
@@ -40,12 +47,8 @@ const ctx = canvas.getContext('2d');
 
 let isDrawing = false;
 
-// camada metalizada
-const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
-gradient.addColorStop(0,'#4e9c6e');
-gradient.addColorStop(0.5,'#4e9c6e');
-gradient.addColorStop(1,'#4e9c6e');
-ctx.fillStyle = gradient;
+// camada verde escuro metálico
+ctx.fillStyle = '#4e9c6e';
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
 canvas.addEventListener('pointerdown',()=>isDrawing=true);
@@ -59,7 +62,7 @@ function scratch(e){
   const y = e.clientY - rect.top;
   ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath();
-  ctx.arc(x,y,25,0,Math.PI*2);
+  ctx.arc(x,y,30,0,Math.PI*2);
   ctx.fill();
   checkReveal();
 }
@@ -84,11 +87,11 @@ const confCtx = confettiCanvas.getContext('2d');
 let confettis = [];
 
 function launchConfetti(){
-  for(let i=0;i<100;i++){
+  for(let i=0;i<200;i++){
     confettis.push({
       x: Math.random()*confettiCanvas.width,
       y: Math.random()*confettiCanvas.height,
-      r: Math.random()*6+4,
+      r: Math.random()*8+4,
       d: Math.random()*0.03+0.01,
       color:`hsl(${Math.random()*360},100%,50%)`,
       tilt: Math.random()*10-5
@@ -115,4 +118,3 @@ function animateConfetti(){
 </script>
 </body>
 </html>
-
