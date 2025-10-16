@@ -5,16 +5,15 @@
 <title>Raspadinha Digital Premium</title>
 <style>
   body { display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; margin:0; font-family:sans-serif; }
-  #container { position:relative; width:1000px; height:500px; }
-  canvas { border-radius:20px; touch-action: none; position:absolute; top:0; left:0; }
+  #container { position:relative; width:100%; max-width:1000px; aspect-ratio:2/1; }
+  canvas { border-radius:20px; touch-action: none; position:absolute; top:0; left:0; width:100%; height:100%; }
   #message {
     position:absolute;
-    top:0; left:0;
-    width:1000px; height:500px;
+    inset:0;
     display:flex;
     justify-content:center;
     align-items:center;
-    font-size:42px;
+    font-size:clamp(24px,4vw,42px);
     font-weight:bold;
     color:#333;
     background:linear-gradient(135deg,#fff8e1,#ffe0b2);
@@ -23,99 +22,105 @@
     padding:20px;
     box-sizing:border-box;
   }
-  #confetti { 
-    position:absolute; 
-    top:0; 
-    left:0; 
-    width:1000px; 
-    height:500px; 
-    pointer-events:none; 
-  }
+  #confetti { pointer-events:none; }
 </style>
 </head>
 <body>
 <div id="container">
   <div id="message">Vale um sofá 😎😏🛋️</div>
-  <canvas id="scratch" width="1000" height="500"></canvas>
-  <canvas id="confetti" width="1000" height="500"></canvas>
+  <canvas id="scratch"></canvas>
+  <canvas id="confetti"></canvas>
 </div>
 
 <script>
+// Ajusta para pixel ratio
+function setupCanvas(canvas) {
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+  return ctx;
+}
+
 // ----- Raspadinha -----
 const canvas = document.getElementById('scratch');
-const ctx = canvas.getContext('2d');
+const ctx = setupCanvas(canvas);
 
 let isDrawing = false;
 
-// camada verde escuro metálico
+// camada verde escuro seca
 ctx.fillStyle = '#4e9c6e';
-ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-canvas.addEventListener('pointerdown',()=>isDrawing=true);
-canvas.addEventListener('pointerup',()=>isDrawing=false);
-canvas.addEventListener('pointermove',scratch);
+canvas.addEventListener('pointerdown', () => isDrawing = true);
+canvas.addEventListener('pointerup', () => isDrawing = false);
+canvas.addEventListener('pointermove', scratch);
 
-function scratch(e){
-  if(!isDrawing) return;
+function scratch(e) {
+  if (!isDrawing) return;
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
   ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath();
-  ctx.arc(x,y,45,0,Math.PI*2);
+  ctx.arc(x, y, 30, 0, Math.PI * 2);
   ctx.fill();
   checkReveal();
 }
 
-function checkReveal(){
-  const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+function checkReveal() {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = imageData.data;
   let cleared = 0;
-  for(let i=3;i<pixels.length;i+=4){
-    if(pixels[i]===0) cleared++;
+  for (let i = 3; i < pixels.length; i += 4) {
+    if (pixels[i] === 0) cleared++;
   }
-  const percent = cleared / (canvas.width*canvas.height) *100;
-  if(percent>50){
-    canvas.style.display='none';
+  const percent = cleared / (canvas.width * canvas.height) * 100;
+  if (percent > 50) {
+    canvas.style.display = 'none';
     launchConfetti();
   }
 }
 
 // ----- Confetti -----
 const confettiCanvas = document.getElementById('confetti');
-const confCtx = confettiCanvas.getContext('2d');
+const confCtx = setupCanvas(confettiCanvas);
 let confettis = [];
 
-function launchConfetti(){
-  for(let i=0;i<200;i++){
+function launchConfetti() {
+  const baseCount = 150;
+  const ratio = window.devicePixelRatio || 1;
+  const count = baseCount / ratio; // ajusta quantidade
+  for (let i = 0; i < count; i++) {
     confettis.push({
-      x: Math.random()*confettiCanvas.width,
-      y: Math.random()*confettiCanvas.height,
-      r: Math.random()*8+4,
-      d: Math.random()*0.03+0.01,
-      color:`hsl(${Math.random()*360},100%,50%)`,
-      tilt: Math.random()*10-5
+      x: Math.random() * confettiCanvas.width / ratio,
+      y: Math.random() * confettiCanvas.height / ratio,
+      r: Math.random() * 8 + 4,
+      d: Math.random() * 0.03 + 0.01,
+      color: `hsl(${Math.random() * 360},100%,50%)`,
+      tilt: Math.random() * 10 - 5
     });
   }
   animateConfetti();
 }
 
-function animateConfetti(){
-  confCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  confettis.forEach(c=>{
-    confCtx.fillStyle=c.color;
+function animateConfetti() {
+  confCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  confettis.forEach(c => {
+    confCtx.fillStyle = c.color;
     confCtx.beginPath();
     confCtx.moveTo(c.x + c.tilt, c.y);
-    confCtx.lineTo(c.x + c.tilt + c.r/2, c.y + c.r);
-    confCtx.lineTo(c.x + c.tilt - c.r/2, c.y + c.r);
+    confCtx.lineTo(c.x + c.tilt + c.r / 2, c.y + c.r);
+    confCtx.lineTo(c.x + c.tilt - c.r / 2, c.y + c.r);
     confCtx.closePath();
     confCtx.fill();
     c.y += 2;
-    if(c.y>confettiCanvas.height) c.y=0;
+    if (c.y > confettiCanvas.height) c.y = 0;
   });
-  if(confettis.length>0) requestAnimationFrame(animateConfetti);
+  if (confettis.length > 0) requestAnimationFrame(animateConfetti);
 }
 </script>
 </body>
 </html>
-
