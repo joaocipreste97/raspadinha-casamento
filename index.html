@@ -62,7 +62,7 @@ function scratch(e){
   const y = e.clientY - rect.top;
   ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath();
-  ctx.arc(x,y,30,0,Math.PI*2);
+  ctx.arc(x,y,45,0,Math.PI*2);
   ctx.fill();
   checkReveal();
 }
@@ -118,3 +118,4 @@ function animateConfetti(){
 </script>
 </body>
 </html>
+
