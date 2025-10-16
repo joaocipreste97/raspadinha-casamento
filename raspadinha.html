@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Raspadinha Digital Premium</title>
+<style>
+  body { display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; margin:0; font-family:sans-serif; }
+  #container { position:relative; width:500px; height:250px; }
+  canvas { border-radius:20px; touch-action: none; position:absolute; top:0; left:0; }
+  #message {
+    position:absolute;
+    top:0; left:0;
+    width:500px; height:250px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:36px;
+    font-weight:bold;
+    color:#333;
+    background:linear-gradient(135deg,#fff8e1,#ffe0b2);
+    border-radius:20px;
+    text-align:center;
+    padding:20px;
+    box-sizing:border-box;
+  }
+  #confetti { position:absolute; top:0; left:0; width:500px; height:250px; pointer-events:none; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="message">Vale 1000€ para um sofá 🛋️</div>
+  <canvas id="scratch" width="500" height="250"></canvas>
+  <canvas id="confetti" width="500" height="250"></canvas>
+</div>
+
+<script>
+// ----- Raspadinha -----
+const canvas = document.getElementById('scratch');
+const ctx = canvas.getContext('2d');
+
+let isDrawing = false;
+
+// camada metalizada
+const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+gradient.addColorStop(0,'#4e9c6e');
+gradient.addColorStop(0.5,'#4e9c6e');
+gradient.addColorStop(1,'#4e9c6e');
+ctx.fillStyle = gradient;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+canvas.addEventListener('pointerdown',()=>isDrawing=true);
+canvas.addEventListener('pointerup',()=>isDrawing=false);
+canvas.addEventListener('pointermove',scratch);
+
+function scratch(e){
+  if(!isDrawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(x,y,25,0,Math.PI*2);
+  ctx.fill();
+  checkReveal();
+}
+
+function checkReveal(){
+  const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const pixels = imageData.data;
+  let cleared = 0;
+  for(let i=3;i<pixels.length;i+=4){
+    if(pixels[i]===0) cleared++;
+  }
+  const percent = cleared / (canvas.width*canvas.height) *100;
+  if(percent>50){
+    canvas.style.display='none';
+    launchConfetti();
+  }
+}
+
+// ----- Confetti -----
+const confettiCanvas = document.getElementById('confetti');
+const confCtx = confettiCanvas.getContext('2d');
+let confettis = [];
+
+function launchConfetti(){
+  for(let i=0;i<100;i++){
+    confettis.push({
+      x: Math.random()*confettiCanvas.width,
+      y: Math.random()*confettiCanvas.height,
+      r: Math.random()*6+4,
+      d: Math.random()*0.03+0.01,
+      color:`hsl(${Math.random()*360},100%,50%)`,
+      tilt: Math.random()*10-5
+    });
+  }
+  animateConfetti();
+}
+
+function animateConfetti(){
+  confCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  confettis.forEach(c=>{
+    confCtx.fillStyle=c.color;
+    confCtx.beginPath();
+    confCtx.moveTo(c.x + c.tilt, c.y);
+    confCtx.lineTo(c.x + c.tilt + c.r/2, c.y + c.r);
+    confCtx.lineTo(c.x + c.tilt - c.r/2, c.y + c.r);
+    confCtx.closePath();
+    confCtx.fill();
+    c.y += 2;
+    if(c.y>confettiCanvas.height) c.y=0;
+  });
+  if(confettis.length>0) requestAnimationFrame(animateConfetti);
+}
+</script>
+</body>
+</html>
